@@ -21,22 +21,13 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="jni.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="jni_md.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="jvmti.h">
+    <ClInclude Include="..\..\..\..\Documents\GitHub\Lycoris-Client\src\main\java\rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="main.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="classes.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl.h">
+    <ClInclude Include="NativeAgent.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -45,6 +36,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NativeAgent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
