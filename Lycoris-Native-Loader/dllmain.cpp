@@ -1,97 +1,22 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "pch.h"
 #include "main.h"
-
-#include <fstream>
-#include <iostream>
+#include "NativeAgent.h"
 
 using namespace std;
-
-jvmtiEnv *jvmti;
-JavaVM *jvm;
-JNIEnv *env;
-
-
-static bool jvmtiLoaded= false;
 
 /* utilities */
 
 static jmethodID getMethod = NULL, invokeMethod = NULL;
 static jclass nativeAccesses = NULL, reflections = NULL;
 static string* names = NULL;
+static NativeAgent nativeAgent;
 
 jclass clazztigger;
 
 DWORD WINAPI MainThread(CONST LPVOID lpParam)
 {
-	HMODULE jvmDll = GetModuleHandleA("jvm.dll");
-	if (!jvmDll)
-	{
-		DWORD lastError = GetLastError();
-		MessageBoxA(NULL, "Error: 0x00000001", "Lycoris Loader", MB_OK | MB_ICONERROR);
-		ExitThread(0);
-	}
-
-	FARPROC getJvmsVoidPtr = GetProcAddress(jvmDll, "JNI_GetCreatedJavaVMs");
-
-	if (!getJvmsVoidPtr)
-	{
-		DWORD lastError = GetLastError();
-		MessageBoxA(NULL, "Error: 0x00000002", "Lycoris Loader", MB_OK | MB_ICONERROR);
-		ExitThread(0);
-	}
-
-	typedef jint(JNICALL* GetCreatedJavaVMs)(JavaVM**, jsize, jsize*);
-
-	GetCreatedJavaVMs jni_GetCreatedJavaVMs = (GetCreatedJavaVMs)getJvmsVoidPtr;
-
-    jsize count;
-    if (jni_GetCreatedJavaVMs((JavaVM **) &jvm, 1, &count) != JNI_OK || count == 0) { //获取JVM
-        MessageBoxA(nullptr, "Error: 0x00000003", "LycorisAgent", MB_OK | MB_ICONERROR); //无法获取JVM
-        ExitThread(0);
-    }
-
-    jint res = jvm->GetEnv((void **) &env, JNI_VERSION_1_6); //获取JNI
-    if (res == JNI_EDETACHED) {
-        res = jvm->AttachCurrentThread((void **) &env, nullptr);
-    }
-
-    if (res != JNI_OK) {
-        MessageBoxA(nullptr, "Error: 0x00000004", "LycorisAgent", MB_OK | MB_ICONERROR); //无法获取JNI
-        ExitThread(0);
-    }
-
-    res = jvm->GetEnv((void **) &jvmti, JVMTI_VERSION_1_0);
-    if (res != JNI_OK) {
-        MessageBoxA(nullptr, "Error: 0x00000005", "LycorisAgent", MB_OK | MB_ICONERROR); //无法获取JVMTI ENV
-        ExitThread(0);
-    }
-	//Setting up JVMTI Env
-	jrawMonitorID vmtrace_lock;
-	jlong start_time;
-	jvmti->CreateRawMonitor("vmtrace_lock", &vmtrace_lock);
-	jvmti->GetTime(&start_time);
-
-	if (env->ExceptionOccurred()) {
-		env->ExceptionDescribe();
-		ExitThread(0);
-	}
-
-	jvmtiCapabilities capabilities = { 0 };
-	jvmti->GetPotentialCapabilities(&capabilities);
-	capabilities.can_generate_all_class_hook_events = 1;
-	capabilities.can_retransform_any_class = 1;
-	capabilities.can_retransform_classes = 1;
-	capabilities.can_redefine_any_class = 1;
-	capabilities.can_redefine_classes = 1;
-	int error = jvmti->AddCapabilities(&capabilities);
-	if (env->ExceptionOccurred()) {
-		MessageBoxA(nullptr, "Error: 0x00000006", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
-		env->ExceptionDescribe();
-		ExitThread(0);
-	}
-	jvmtiLoaded = true;
-	//cout << "[Lycoris Agent] JVMTI was set!" << endl;
+	nativeAgent = NativeAgent();
 	ExitThread(0);
 }
 
@@ -158,8 +83,8 @@ void JNICALL classTransformerHook
 	jint* new_data_len,
 	unsigned char** new_data
 ) {
-	if (!jvmtiLoaded) {
-		MessageBoxA(nullptr, "Error: 0x00000006", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
+	if (nativeAgent.error != 0) {
+		MessageBoxA(NULL, "Error: 0x00000010", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
 		ExitThread(0);
 	}
 	jvmti->Allocate(data_len, new_data);
@@ -196,12 +121,16 @@ void JNICALL classTransformerHook
 }
 
 
-extern "C" __declspec(dllexport) jobjectArray Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_getAllLoadedClasses(JNIEnv * env) {
-	JNIEnv* jnienv = env;
+extern "C" __declspec(dllexport) jobjectArray Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_getAllLoadedClasses(JNIEnv * jnienv) {
+	if (nativeAgent.error != 0) {
+		MessageBoxA(NULL, "Error: 0x00000011", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
+		ExitThread(0);
+	}
+
 	jclass* jvmClasses;
 	jint classCount;
 
-	jint err = (jint)jvmti->GetLoadedClasses(&classCount, &jvmClasses);
+	jint err = (jint)nativeAgent.jvmti->GetLoadedClasses(&classCount, &jvmClasses);
 	if (err) {
 		return asClassArray(jnienv, jvmClasses, classCount);
 	}
@@ -211,7 +140,7 @@ extern "C" __declspec(dllexport) jobjectArray Java_rbq_wtf_lycoris_agent_instrum
 extern "C" __declspec(dllexport) jobjectArray JNICALL Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_getLoadedClasses(JNIEnv * env, jobject instrumentationInstance, jobject classLoader) {
 	jclass* jvmClasses;
 	jint classCount;
-	const jint err = jvmti->GetClassLoaderClasses(classLoader, &classCount, &jvmClasses);
+	const jint err = nativeAgent.jvmti->GetClassLoaderClasses(classLoader, &classCount, &jvmClasses);
 	if (err) {
 		return asClassArray(env, jvmClasses, classCount);
 	}
@@ -220,8 +149,8 @@ extern "C" __declspec(dllexport) jobjectArray JNICALL Java_rbq_wtf_lycoris_agent
 }
 
 extern "C" __declspec(dllexport) jint JNICALL Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_retransformClasses(JNIEnv * env, jobject instrumentationInstance, jobjectArray classes) {
-	if (!jvmtiLoaded) {
-		MessageBoxA(nullptr, "Error: 0x00000006", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
+	if (nativeAgent.error != 0) {
+		MessageBoxA(NULL, "Error: 0x00000010", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
 		ExitThread(0);
 	}
 	const jclass stringCls = env->FindClass("java/lang/String");
@@ -244,14 +173,14 @@ extern "C" __declspec(dllexport) jint JNICALL Java_rbq_wtf_lycoris_agent_instrum
 	classesToRedefine = size;
 	jvmtiEventCallbacks callbacks;
 	callbacks.ClassFileLoadHook = classTransformerHook;
-	jvmti->SetEventCallbacks(&callbacks, sizeof(callbacks));
-	jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, NULL);
+	nativeAgent.jvmti->SetEventCallbacks(&callbacks, sizeof(callbacks));
+	nativeAgent.jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, NULL);
 
-	int error = jvmti->RetransformClasses(size, jvmClasses);
+	int error = nativeAgent.jvmti->RetransformClasses(size, jvmClasses);
 	char* sig;
-	jvmti->GetClassSignature(clazztigger, &sig, NULL);
+	nativeAgent.jvmti->GetClassSignature(clazztigger, &sig, NULL);
 	if (error) {
-		MessageBoxA(nullptr, "Trasnform Error", "LycorisAgent", MB_OK | MB_ICONERROR); //Transform Error
+		MessageBoxA(NULL, "Trasnform Error", "LycorisAgent", MB_OK | MB_ICONERROR); //Transform Error
 	}
 	return error;
 }

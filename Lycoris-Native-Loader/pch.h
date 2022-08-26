@@ -12,4 +12,7 @@
 #include "jni.h"
 #include "jvmti.h"
 
+#include <fstream>
+#include <iostream>
+
 #endif //PCH_H

@@ -21,13 +21,13 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Documents\GitHub\Lycoris-Client\src\main\java\rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="main.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="NativeAgent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
