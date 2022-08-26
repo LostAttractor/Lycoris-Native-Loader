@@ -11,15 +11,14 @@ NativeAgent::NativeAgent() {
 	if (!jvmDll)
 	{
 		DWORD lastError = GetLastError();
-		//MessageBoxA(NULL, "Error: 0x00000001", "Lycoris Loader", MB_OK | MB_ICONERROR);
+		//MessageBoxA(NULL, "Error: 0x00000001", "Lycoris Loader", MB_OK | MB_ICONERROR); //Can't find jvm.dll module handle
 		code = 1;
 		return;
 	}
 
 	FARPROC getJvmsVoidPtr = GetProcAddress(jvmDll, "JNI_GetCreatedJavaVMs");
 
-	if (!getJvmsVoidPtr)
-	{
+	if (!getJvmsVoidPtr) {
 		DWORD lastError = GetLastError();
 		//MessageBoxA(NULL, "Error: 0x00000002", "Lycoris Loader", MB_OK | MB_ICONERROR);
 		code = 2;
@@ -27,7 +26,6 @@ NativeAgent::NativeAgent() {
 	}
 
 	typedef jint(JNICALL* GetCreatedJavaVMs)(JavaVM**, jsize, jsize*);
-
 	GetCreatedJavaVMs jni_GetCreatedJavaVMs = (GetCreatedJavaVMs)getJvmsVoidPtr;
 
 	jsize count;
