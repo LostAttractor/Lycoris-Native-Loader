@@ -195,10 +195,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-		HANDLE hdlWrite = GetStdHandle(STD_OUTPUT_HANDLE);
-		FILE* stream;
-		freopen_s(&stream ,"CONOUT$", "w+t", stdout);
-		freopen_s(&stream, "CONIN$", "r+t", stdin);
+		//HANDLE hdlWrite = GetStdHandle(STD_OUTPUT_HANDLE);
+		//FILE* stream;
+		//freopen_s(&stream ,"CONOUT$", "w+t", stdout);
+		//freopen_s(&stream, "CONIN$", "r+t", stdin);
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&MainThread, NULL, 0, NULL);
 		break;
     }
