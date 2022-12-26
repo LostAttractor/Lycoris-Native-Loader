@@ -84,7 +84,7 @@
     <ClInclude Include="main.h" />
     <ClInclude Include="NativeAgent.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl.h" />
+    <ClInclude Include="rbq_lycoris_agent_instrument_impl_InstrumentationImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

@@ -27,7 +27,7 @@
     <ClInclude Include="NativeAgent.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl.h">
+    <ClInclude Include="rbq_lycoris_agent_instrument_impl_InstrumentationImpl.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

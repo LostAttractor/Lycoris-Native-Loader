@@ -88,7 +88,7 @@ void JNICALL classTransformerHook
 		ExitThread(0);
 	}
 	jvmti->Allocate(data_len, new_data);
-	jclass transformerClass = findClass(env, jvmti, "Lrbq/wtf/lycoris/client/transformer/TransformManager;");
+	jclass transformerClass = findClass(env, jvmti, "Lrbq/lycoris/client/transformer/TransformManager;");
 	jmethodID transfrom = env->GetStaticMethodID(transformerClass, "onTransform", "(Ljava/lang/Class;[B)[B");
 	jclass clazzt = class_being_redefined;
 	jbyteArray classdata = asByteArray(env, data, data_len);
@@ -121,7 +121,7 @@ void JNICALL classTransformerHook
 }
 
 
-extern "C" __declspec(dllexport) jobjectArray Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_getAllLoadedClasses(JNIEnv * jnienv) {
+extern "C" __declspec(dllexport) jobjectArray Java_rbq_lycoris_agent_instrument_impl_InstrumentationImpl_getAllLoadedClasses(JNIEnv * jnienv) {
 	if (nativeAgent.error != 0) {
 		MessageBoxA(NULL, "Error: 0x00000011", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
 		ExitThread(0);
@@ -137,7 +137,7 @@ extern "C" __declspec(dllexport) jobjectArray Java_rbq_wtf_lycoris_agent_instrum
 
 	return asClassArray(jnienv, jvmClasses, classCount);
 }
-extern "C" __declspec(dllexport) jobjectArray JNICALL Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_getLoadedClasses(JNIEnv * env, jobject instrumentationInstance, jobject classLoader) {
+extern "C" __declspec(dllexport) jobjectArray JNICALL Java_rbq_lycoris_agent_instrument_impl_InstrumentationImpl_getLoadedClasses(JNIEnv * env, jobject instrumentationInstance, jobject classLoader) {
 	jclass* jvmClasses;
 	jint classCount;
 	const jint err = nativeAgent.jvmti->GetClassLoaderClasses(classLoader, &classCount, &jvmClasses);
@@ -148,7 +148,7 @@ extern "C" __declspec(dllexport) jobjectArray JNICALL Java_rbq_wtf_lycoris_agent
 	return asClassArray(env, jvmClasses, classCount);
 }
 
-extern "C" __declspec(dllexport) jint JNICALL Java_rbq_wtf_lycoris_agent_instrument_impl_InstrumentationImpl_retransformClasses(JNIEnv * env, jobject instrumentationInstance, jobjectArray classes) {
+extern "C" __declspec(dllexport) jint JNICALL Java_rbq_lycoris_agent_instrument_impl_InstrumentationImpl_retransformClasses(JNIEnv * env, jobject instrumentationInstance, jobjectArray classes) {
 	if (nativeAgent.error != 0) {
 		MessageBoxA(NULL, "Error: 0x00000010", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
 		ExitThread(0);
