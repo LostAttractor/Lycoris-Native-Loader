@@ -1,18 +1,14 @@
 #include "pch.h"
 #include "NativeAgent.h"
 
-jvmtiEnv* jvmti;
-JavaVM* jvm;
-JNIEnv* env;
-int code = -1;
-
 NativeAgent::NativeAgent() {
+	error = -1;
+
 	HMODULE jvmDll = GetModuleHandleA("jvm.dll");
 	if (!jvmDll)
 	{
 		DWORD lastError = GetLastError();
-		//MessageBoxA(NULL, "Error: 0x00000001", "Lycoris Loader", MB_OK | MB_ICONERROR); //Can't find jvm.dll module handle
-		code = 1;
+		error = 1; //Can't find jvm.dll module handle
 		return;
 	}
 
@@ -20,8 +16,7 @@ NativeAgent::NativeAgent() {
 
 	if (!getJvmsVoidPtr) {
 		DWORD lastError = GetLastError();
-		//MessageBoxA(NULL, "Error: 0x00000002", "Lycoris Loader", MB_OK | MB_ICONERROR);
-		code = 2;
+		error = 2;
 		return;
 	}
 
@@ -30,26 +25,23 @@ NativeAgent::NativeAgent() {
 
 	jsize count;
 	if (jni_GetCreatedJavaVMs((JavaVM**)&jvm, 1, &count) != JNI_OK || count == 0) { //获取JVM
-		//MessageBoxA(nullptr, "Error: 0x00000003", "LycorisAgent", MB_OK | MB_ICONERROR); //无法获取JVM
-		code = 3;
+		error = 3;
 		return;
 	}
 
-	jint res = jvm->GetEnv((void**)&env, JNI_VERSION_1_6); //获取JNI
+	jint res = jvm->GetEnv((void**)&jnienv, JNI_VERSION_1_6); //获取JNI
 	if (res == JNI_EDETACHED) {
-		res = jvm->AttachCurrentThread((void**)&env, nullptr);
+		res = jvm->AttachCurrentThread((void**)&jnienv, nullptr);
 	}
 
 	if (res != JNI_OK) {
-		//MessageBoxA(nullptr, "Error: 0x00000004", "LycorisAgent", MB_OK | MB_ICONERROR); //无法获取JNI
-		code = 4;
+		error = 4; //无法获取JNI
 		return;
 	}
 
 	res = jvm->GetEnv((void**)&jvmti, JVMTI_VERSION_1_0);
 	if (res != JNI_OK) {
-		//MessageBoxA(nullptr, "Error: 0x00000005", "LycorisAgent", MB_OK | MB_ICONERROR); //无法获取JVMTI ENV
-		code = 5;
+		error = 5; //无法获取JVMTI ENV
 		return;
 	}
 	//Setting up JVMTI Env
@@ -58,12 +50,13 @@ NativeAgent::NativeAgent() {
 	jvmti->CreateRawMonitor("vmtrace_lock", &vmtrace_lock);
 	jvmti->GetTime(&start_time);
 
-	if (env->ExceptionOccurred()) {
-		env->ExceptionDescribe();
-		code = 6;
+	if (jnienv->ExceptionOccurred()) {
+		jnienv->ExceptionDescribe();
+		error = 6; //无法给JVM加锁
 		return;
 	}
 
+	// 修改JVMTI Capabilities
 	jvmtiCapabilities capabilities = { 0 };
 	jvmti->GetPotentialCapabilities(&capabilities);
 	capabilities.can_generate_all_class_hook_events = 1;
@@ -71,14 +64,14 @@ NativeAgent::NativeAgent() {
 	capabilities.can_retransform_classes = 1;
 	capabilities.can_redefine_any_class = 1;
 	capabilities.can_redefine_classes = 1;
-	int error = jvmti->AddCapabilities(&capabilities);
-	if (env->ExceptionOccurred()) {
-		env->ExceptionDescribe();
-		//MessageBoxA(nullptr, "Error: 0x00000006", "LycorisAgent", MB_OK | MB_ICONERROR); //获取JVMTI错误
-		//ExitThread(0);
-		code = 7;
+	if (jvmti->AddCapabilities(&capabilities) != 0) {
+		error = 7; //修改JVMTI Capabilities失败
 		return;
 	}
-	//cout << "[Lycoris Agent] JVMTI was set!" << endl;
-	code = 0;
+	if (jnienv->ExceptionOccurred()) {
+		jnienv->ExceptionDescribe();
+		error = 8; //修改JVMTI Capabilities导致JNIEnv出错
+		return;
+	}
+	error = 0;
 }

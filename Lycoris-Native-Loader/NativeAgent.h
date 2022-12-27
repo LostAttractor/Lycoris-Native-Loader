@@ -10,7 +10,6 @@ class NativeAgent
 
 		jvmtiEnv* jvmti;
 		JavaVM* jvm;
-		JNIEnv* env;
+		JNIEnv* jnienv;
 		int error;
 };
-

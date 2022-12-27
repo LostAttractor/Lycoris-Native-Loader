@@ -17,19 +17,19 @@ JNIEXPORT jobjectArray JNICALL Java_rbq_lycoris_agent_instrument_impl_Instrument
 
 /*
  * Class:     rbq_lycoris_agent_instrument_impl_InstrumentationImpl
- * Method:    retransformClasses
- * Signature: ([Ljava/lang/Class;)I
- */
-JNIEXPORT jint JNICALL Java_rbq_lycoris_agent_instrument_impl_InstrumentationImpl_retransformClasses
-  (JNIEnv *, jobject, jobjectArray);
-
-/*
- * Class:     rbq_lycoris_agent_instrument_impl_InstrumentationImpl
  * Method:    getLoadedClasses
  * Signature: (Ljava/lang/ClassLoader;)[Ljava/lang/Class;
  */
 JNIEXPORT jobjectArray JNICALL Java_rbq_lycoris_agent_instrument_impl_InstrumentationImpl_getLoadedClasses
   (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     rbq_lycoris_agent_instrument_impl_InstrumentationImpl
+ * Method:    reTransformClasses
+ * Signature: ([Ljava/lang/Class;)I
+ */
+JNIEXPORT jint JNICALL Java_rbq_lycoris_agent_instrument_impl_InstrumentationImpl_reTransformClasses
+  (JNIEnv *, jobject, jobjectArray);
 
 #ifdef __cplusplus
 }
